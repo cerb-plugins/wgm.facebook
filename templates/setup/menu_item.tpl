@@ -1,0 +1,1 @@
+<a href="{devblocks_url}c=config&a=facebook{/devblocks_url}">{'wgm.facebook.common'|devblocks_translate}</a>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.devblocks.com/schema/plugin.xsd">
+	<id>wgm.facebook</id>
+	<name>[WGM] Facebook Integration</name>
+	<description>This plugin provides integration with Facebook for status update functionality.</description>
+	<author>WebGroup Media, LLC.</author>
+	<revision>1</revision>
+	<link>http://www.cerb5.com/</link>
+	<image>plugin.png</image>
+ 
+	<!-- Plugin Dependencies -->
+	
+	<dependencies>
+		<require plugin_id="cerberusweb.core" version="5.4.0" />
+	</dependencies>
+
+	<!-- Patches -->
+	
+	<patches>
+		<!--
+		<patch version="5.3.0" revision="1" file="patches/5.3.0.php" />
+		-->
+	</patches>
+	
+	<!-- Exported Classes -->
+	
+ 	<class_loader>
+		<file path="api/App.php">
+			<class name="WgmFacebook_API" />
+		</file>
+	</class_loader>
+
+	<!-- Extensions -->
+ 
+	<extensions>
+
+		<!-- Setup Page Menu Item -->
+
+		<extension point="cerberusweb.ui.page.menu.item">
+			<id>wgmfacebook.setup.menu.plugins.facebook</id>
+			<name>Facebook Plugins Menu Item</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmFacebook_SetupPluginsMenuItem</name>
+			</class>
+			<params>
+				<param key="page_id" value="core.page.configuration" />
+				<param key="menu_id" value="core.setup.menu.plugins" />
+			</params>
+		</extension>
+		
+		<!-- Setup Page Sections -->
+		
+		<extension point="cerberusweb.ui.page.section">
+			<id>wgmfacebook.setup.facebook</id>
+			<name>Setup Page Facebook Section</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmFacebook_SetupSection</name>
+			</class>
+			<params>
+				<param key="page_id" value="core.page.configuration" />
+				<param key="uri" value="facebook" />
+			</params>
+		</extension>
+		
+		<!-- Event Actions -->
+		
+		<extension point="devblocks.event.action">
+			<id>wgmfacebook.event.action.post</id>
+			<name>Update Facebook Status</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmFacebook_EventActionPost</name>
+			</class>
+			<params>
+				<param key="label" value="Update Facebook Status" />
+			</params>
+		</extension>
+		
+		<extension point="devblocks.controller">
+			<id>wgmfacebook.controller</id>
+			<name>Facebook Auth Controller</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmFacebook_Controller</name>
+			</class>
+			<params>
+				<param key="uri" value="facebookauth" />
+			</params>
+		</extension>
+		
+    </extensions> 
+</plugin>
