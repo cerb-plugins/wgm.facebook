@@ -74,7 +74,7 @@
 				<name>WgmFacebook_EventActionPost</name>
 			</class>
 			<params>
-				<param key="label" value="Update Facebook Status" />
+				<param key="label" value="Post to Facebook" />
 			</params>
 		</extension>
 		

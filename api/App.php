@@ -114,7 +114,7 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 				header('Location: ' . $auth_url);
 //				var_dump($oauth_callback_url);
 			} catch(OAuthException $e) {
-				echo "Exception " . $e->getMessage();
+				echo "Exception: " . $e->getMessage();
 			}
 		}
 	}
