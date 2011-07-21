@@ -119,6 +119,24 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 		}
 	}
 	
+	function removeUserAction() {
+		@$user_id = DevblocksPlatform::importGPC($_REQUEST['user_id'], 'int', 0);
+		
+		$users = json_decode(DevblocksPlatform::getPluginSetting('wgm.facebook', 'users', ''), true);
+		try {
+			if(!array_key_exists($user_id, $users))
+				throw new Exception("The user could not be deleted. Does it exist?");
+				
+				$user = $users[$user_id];
+				unset($users[$user_id]);
+				DevblocksPlatform::setPluginSetting('wgm.facebook', 'users', json_encode($users));
+				echo json_encode(array('status'=>true,'message'=>$user['name'].' was removed!', 'count'=>count($users)));
+		} catch (Exception $e) {
+			echo json_encode(array('status'=>false,'error'=>$e->getMessage()));
+			return;
+		}
+	}
+	
 	
 };
 endif;
