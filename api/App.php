@@ -128,7 +128,6 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 			try {				
 				$auth_url = $facebook->getAuthorizationUrl($oauth_callback_url);
 				header('Location: ' . $auth_url);
-//				var_dump($oauth_callback_url);
 			} catch(OAuthException $e) {
 				echo "Exception: " . $e->getMessage();
 			}
@@ -277,10 +276,9 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 		// Translate message tokens
 		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
 		if(false !== ($content = $tpl_builder->build($params['content'], $values))) {
-
+			
 			$facebook->setCredentials($user['access_token']);
 			$facebook->postStatusMessage($user['id'], $content);
-			// POST profile_id/feed 'message' 'type'
 			
 		}
 	}
