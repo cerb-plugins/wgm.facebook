@@ -43,7 +43,15 @@
 		<legend>Authorized Users</legend>
 		<ul>
 		{foreach $params.users as $user}
-		<li>{$user.name} <button id="{$user.id}" type="button" class="submit"><span class="cerb-sprite2 sprite-cross-circle-frame"></span></button></li>
+		<li>{$user.name}'s Pages <button id="{$user.id}" type="button" class="submit"><span class="cerb-sprite2 sprite-cross-circle-frame"></span></button></li>
+		{if isset($user.pages)}
+		<ul>
+		{foreach $user.pages as $page}
+		<li><em>{$page.name}</em></li>
+		{/foreach}
+		</ul>
+		{/if}
+		
 		{/foreach}
 		</ul>
 		<div class="status"></div>

@@ -102,7 +102,23 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 				$user = $facebook->getUser();
 				
 				$users = json_decode(DevblocksPlatform::getPluginSetting('wgm.facebook', 'users', ''), true);
-				$user = array('id' => $user['id'], 'name' => $user['name'], 'access_token' => $token['access_token']);
+				$user = array('id' => $user['id'], 'name' => $user['name']);
+				$pages = $facebook->getUserPages();
+				$user_pages = array(
+					$user['id'] => array(
+						'id' => $user['id'],
+						'name' => $user['name'] . "'s Profile",
+						'access_token' => $token['access_token'],
+						'full_id' => $user['id'] . '.' . $user['id']
+					)
+				);
+				foreach($pages['data'] as $page) {
+					if($page['category'] !== 'Application') {
+						$page['full_id'] = $user['id'] . '.' . $page['id'];
+						$user_pages[$page['id']] = $page;
+					}
+				}
+				$user['pages'] = $user_pages;
 				$users[$user['id']] = $user;
 				
 				DevblocksPlatform::setPluginSetting('wgm.facebook', 'users', json_encode($users));
@@ -192,6 +208,10 @@ class WgmFacebook_API {
 		return $this->get(self::FACEBOOK_OAUTH_HOST . '/me');
 	}
 	
+	public function getUserPages() {
+		return $this->get(self::FACEBOOK_OAUTH_HOST . '/me/accounts');
+	}
+	
 	public function postStatusMessage($user, $content) {
 		$params = array(
 			'message' => $content,
@@ -249,7 +269,10 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 		$users = DevblocksPlatform::getPluginSetting('wgm.facebook', 'users');
 		$users = json_decode($users, TRUE);
 		
-		$user = $users[$params['user']];
+		$dot = strpos($params['user'], '.');
+		$user_id = substr($params['user'], 0, $dot);
+		$page_id = substr($params['user'], $dot+1);
+		$user = $users[$user_id]['pages'][$page_id];
 
 		// Translate message tokens
 		$tpl_builder = DevblocksPlatform::getTemplateBuilder();

@@ -1,7 +1,11 @@
 <b>User:</b>
 <select name="{$namePrefix}[user]">
 {foreach $users as $user}
-<option value="{$user.id}"{if $params.user == $user.id} selected{/if}>{$user.name}</option>
+<optgroup label="{$user.name}'s Pages">
+{foreach $user.pages as $page}
+	<option value="{$page.full_id}" {if $params.user == $page.full_id} selected{/if}>{$page.name}</option>
+{/foreach}
+</optgroup>
 {/foreach}
 </select>
 <br>
