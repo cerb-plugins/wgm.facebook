@@ -204,26 +204,26 @@ class WgmFacebook_API {
 	}
 	
 	public function getUser() {
-		return $this->get(self::FACEBOOK_OAUTH_HOST . '/me');
+		return $this->get('me');
 	}
 	
 	public function getUserPages() {
-		return $this->get(self::FACEBOOK_OAUTH_HOST . '/me/accounts');
+		return $this->get('me/accounts');
 	}
 	
 	public function postStatusMessage($user, $content) {
 		$params = array(
 			'message' => $content,
 		);
-		$this->post(self::FACEBOOK_OAUTH_HOST . '/' . $user. '/feed', $params);
+		$this->post($user. '/feed', $params);
 	}
 	
 	public function post($url, $params) {
-		$this->_fetch($url . '?access_token=' . $this->_access_token, 'POST', $params);
+		$this->_fetch($url, 'POST', $params);
 	}
 	
 	public function get($url) {
-		return $this->_fetch($url . '?access_token=' . $this->_access_token, 'GET');
+		return $this->_fetch($url, 'GET');
 	}
 	
 	private function _fetch($url, $method = 'GET', $params = array()) {		
@@ -235,7 +235,7 @@ class WgmFacebook_API {
 				$method = OAUTH_HTTP_METHOD_GET;
 		}
 		try {
-			$this->_oauth->fetch($url, $params, $method);
+			$this->_oauth->fetch(self::FACEBOOK_OAUTH_HOST . '/' . $url . '?access_token=' . $this->_access_token, $params, $method);
 			return json_decode($this->_oauth->getLastResponse(), true);
 		} catch(OAuthException $e) {
 			echo 'Exception: ' . $e->getMessage();
