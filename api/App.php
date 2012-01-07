@@ -1,5 +1,4 @@
 <?php
-
 class WgmFacebook_Controller extends DevblocksControllerExtension {
 	
 	function isVisible() {
@@ -24,9 +23,7 @@ class WgmFacebook_Controller extends DevblocksControllerExtension {
 	function writeResponse(DevblocksHttpResponse $response) {
 		return;
 	}
-	
-	
-}
+};
 
 if(class_exists('Extension_PageMenuItem')):
 class WgmFacebook_SetupPluginsMenuItem extends Extension_PageMenuItem {
@@ -142,7 +139,6 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 endif;
 
 class WgmFacebook_API {
-	
 	const FACEBOOK_OAUTH_HOST = "https://graph.facebook.com";
 	const FACEBOOK_AUTHORIZE_URL = "https://graph.facebook.com/oauth/authorize";
 	const FACEBOOK_AUTHENTICATE_URL = "https://www.facebook.com/dialog/oauth";
@@ -230,7 +226,6 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 	function render(Extension_DevblocksEvent $event, Model_TriggerEvent $trigger, $params=array(), $seq=null) {
 		$tpl = DevblocksPlatform::getTemplateService();
 		$tpl->assign('params', $params);
-		$tpl->assign('token_labels', $event->getLabels());
 		
 		if(!is_null($seq))
 			$tpl->assign('namePrefix', 'action'.$seq);
