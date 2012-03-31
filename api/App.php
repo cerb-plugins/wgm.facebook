@@ -238,6 +238,31 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 		$tpl->display('devblocks:wgm.facebook::events/action_update_status_facebook.tpl');
 	}
 	
+	function simulate($token, Model_TriggerEvent $trigger, $params, &$values) {
+		$users = DevblocksPlatform::getPluginSetting('wgm.facebook', 'users');
+		$users = json_decode($users, TRUE);
+		
+		@$user = $users[$params['user']];
+		
+		$out = '';
+		
+		if(empty($user)) {
+			return "[ERROR] No Facebook account is configured.  Skipping...";
+		}
+
+		// [TODO] Test Facebook API connection
+		
+		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
+		if(false !== ($content = $tpl_builder->build($params['content'], $values))) {
+			$out .= sprintf(">>> Posting message to Facebook (%s):\n%s\n",
+				$user['name'],
+				$content
+			);
+		}
+		
+		return $out;
+	}
+	
 	function run($token, Model_TriggerEvent $trigger, $params, &$values) {
 		$facebook = WgmFacebook_API::getInstance();
 		
