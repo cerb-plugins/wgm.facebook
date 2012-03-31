@@ -244,12 +244,11 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 		$users = DevblocksPlatform::getPluginSetting('wgm.facebook', 'users');
 		$users = json_decode($users, TRUE);
 		
-		$user = $users[$params['user']];
+		@$user = $users[$params['user']];
 
 		// Translate message tokens
 		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
 		if(false !== ($content = $tpl_builder->build($params['content'], $values))) {
-
 			$facebook->setCredentials($user['access_token']);
 			$facebook->postStatusMessage($user['id'], $content);
 			// POST profile_id/feed 'message' 'type'
