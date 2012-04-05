@@ -238,7 +238,7 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 		$tpl->display('devblocks:wgm.facebook::events/action_update_status_facebook.tpl');
 	}
 	
-	function simulate($token, Model_TriggerEvent $trigger, $params, &$values) {
+	function simulate($token, Model_TriggerEvent $trigger, $params, DevblocksDictionaryDelegate $dict) {
 		$users = DevblocksPlatform::getPluginSetting('wgm.facebook', 'users');
 		$users = json_decode($users, TRUE);
 		
@@ -253,7 +253,7 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 		// [TODO] Test Facebook API connection
 		
 		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
-		if(false !== ($content = $tpl_builder->build($params['content'], $values))) {
+		if(false !== ($content = $tpl_builder->build($params['content'], $dict))) {
 			$out .= sprintf(">>> Posting message to Facebook (%s):\n%s\n",
 				$user['name'],
 				$content
@@ -263,7 +263,7 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 		return $out;
 	}
 	
-	function run($token, Model_TriggerEvent $trigger, $params, &$values) {
+	function run($token, Model_TriggerEvent $trigger, $params, DevblocksDictionaryDelegate $dict) {
 		$facebook = WgmFacebook_API::getInstance();
 		
 		$users = DevblocksPlatform::getPluginSetting('wgm.facebook', 'users');
@@ -273,7 +273,7 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 
 		// Translate message tokens
 		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
-		if(false !== ($content = $tpl_builder->build($params['content'], $values))) {
+		if(false !== ($content = $tpl_builder->build($params['content'], $dict))) {
 			$facebook->setCredentials($user['access_token']);
 			$facebook->postStatusMessage($user['id'], $content);
 			// POST profile_id/feed 'message' 'type'
