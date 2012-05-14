@@ -3,10 +3,6 @@ Cerb5 Plugins - wgm.facebook
 Copyright (C) 2012 WebGroup Media, LLC.  
 [http://www.cerberusweb.com/](http://www.cerberusweb.com/)  
 
-Experimental
-------------
-This plugin is currently being developed and is offered on an experimental basis.  _It is currently only compatible with Cerberus Helpdesk 5.4 or later_.
-
 What's this?
 ------------
 This plugin provides integration with [Facebook](http://www.facebook.com/) via their REST API. This plugin is intended to be a bridge used by other plugins to communicate with the Facebook Graph API. In addition, it adds a new Virtual Attendant action with the ability to post status updates to Facebook.
@@ -14,8 +10,8 @@ This plugin provides integration with [Facebook](http://www.facebook.com/) via t
 Installation
 ------------
 * Make a new [Facebook Application](https://developers.facebook.com/apps)
-* Change directory to **/cerb5/storage/plugins/**
-* `git clone git://github.com/cerb5-plugins/wgm.facebook.git`
+* Change directory to **/cerb6/storage/plugins/**
+* `git clone git://github.com/cerb6-plugins/wgm.facebook.git`
 * In your helpdesk, enable the plugin from **Setup->Plugins**.
 * Click **Setup->Plugins->Facebook** and configure your Facebook app credentials.
 * Authorize the app for the users you wish to be available to the plugin
