@@ -1,4 +1,4 @@
-Cerb5 Plugins - wgm.facebook
+Cerb Plugins - wgm.facebook
 ===========================================
 Copyright (C) 2012 WebGroup Media, LLC.  
 [http://www.cerberusweb.com/](http://www.cerberusweb.com/)  
@@ -11,7 +11,7 @@ Installation
 ------------
 * Make a new [Facebook Application](https://developers.facebook.com/apps)
 * Change directory to **/cerb6/storage/plugins/**
-* `git clone git://github.com/cerb6-plugins/wgm.facebook.git`
+* `git clone git://github.com/cerb-plugins/wgm.facebook.git`
 * In your helpdesk, enable the plugin from **Setup->Plugins**.
 * Click **Setup->Plugins->Facebook** and configure your Facebook app credentials.
 * Authorize the app for the users you wish to be available to the plugin
