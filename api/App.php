@@ -13,7 +13,7 @@ class WgmFacebook_Controller extends DevblocksControllerExtension {
 	 */
 	function handleRequest(DevblocksHttpRequest $request) {
 	
-		@$code = DevblocksPlatform::importGPC($_REQUEST['code'], 'string', ''); 
+		@$code = DevblocksPlatform::importGPC($_REQUEST['code'], 'string', '');
 		$url = DevblocksPlatform::getUrlService();
 		$redirect_url = $url->write('ajax.php?c=config&a=handleSectionAction&section=facebook&action=auth&_callback=true&code=' . $code, true);
 		
@@ -106,7 +106,7 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 				DevblocksPlatform::redirect(new DevblocksHttpResponse(array('config/facebook/')));
 			}
 		} else {
-			try {				
+			try {
 				$auth_url = $facebook->getAuthorizationUrl($oauth_callback_url);
 				header('Location: ' . $auth_url);
 //				var_dump($oauth_callback_url);
@@ -168,16 +168,17 @@ class WgmFacebook_API {
 		return self::$_instance;
 	}
 	
-	public function setCredentials($token) {		
+	public function setCredentials($token) {
 		$this->_access_token = $token;
 	}
 	
 	public function getAccessToken($callback_url, $code) {
 		return $this->_oauth->getAccessToken(self::FACEBOOK_ACCESS_TOKEN_URL .
-												"?client_id=" . $this->_client_id .
-												"&client_secret=" . $this->_client_secret .
-												"&redirect_uri=" . $callback_url .
-												"&code=" . $code);
+			"?client_id=" . $this->_client_id .
+			"&client_secret=" . $this->_client_secret .
+			"&redirect_uri=" . $callback_url .
+			"&code=" . $code
+		);
 	}
 	
 	public function getAuthorizationUrl($callback_url) {
@@ -203,7 +204,7 @@ class WgmFacebook_API {
 		return $this->_fetch($url . '?access_token=' . $this->_access_token, 'GET');
 	}
 	
-	private function _fetch($url, $method = 'GET', $params = array()) {		
+	private function _fetch($url, $method = 'GET', $params = array()) {
 		switch($method) {
 			case 'POST':
 				$method = OAUTH_HTTP_METHOD_POST;
