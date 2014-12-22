@@ -4,21 +4,21 @@
 	<name>Facebook Integration</name>
 	<description>This plugin provides integration with Facebook for status update functionality.</description>
 	<author>Webgroup Media, LLC.</author>
-	<version>1.0.12</version>
+	<version>1.0.13</version>
 	<link>http://www.cerbweb.com/book/latest/plugins/wgm.facebook.html</link>
 	<image>plugin.png</image>
  
  	<!-- Requirements -->
 
 	<requires>
-		<app_version min="6.4" max="6.8.99" />
+		<app_version min="6.4" max="6.9.99" />
 		<php_extension name="oauth" />
 	</requires>
  
 	<!-- Plugin Dependencies -->
 	
 	<dependencies>
-		<require plugin_id="cerberusweb.core" version="6.1.0" />
+		<require plugin_id="cerberusweb.core" version="6.4.0" />
 	</dependencies>
 
 	<!-- Exported Classes -->
