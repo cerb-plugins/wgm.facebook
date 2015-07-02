@@ -182,7 +182,7 @@ class WgmFacebook_API {
 	}
 	
 	public function getAuthorizationUrl($callback_url) {
-		return self::FACEBOOK_AUTHENTICATE_URL . "?client_id=" . $this->_client_id . "&scope=offline_access,manage_pages,publish_stream&redirect_uri=" . $callback_url;
+		return self::FACEBOOK_AUTHENTICATE_URL . "?client_id=" . $this->_client_id . "&scope=public_profile,read_page_mailboxes,manage_pages,publish_pages&redirect_uri=" . $callback_url;
 	}
 	
 	public function getUser() {
