@@ -7,6 +7,7 @@
 	<input type="hidden" name="a" value="handleSectionAction">
 	<input type="hidden" name="section" value="facebook">
 	<input type="hidden" name="action" value="saveJson">
+	<input type="hidden" name="_csrf_token" value="{$session.csrf_token}">
 	
 	<fieldset>
 		<legend>Facebook Application</legend>
@@ -28,6 +29,7 @@
 	<input type="hidden" name="a" value="handleSectionAction">
 	<input type="hidden" name="section" value="facebook">
 	<input type="hidden" name="action" value="auth">
+	<input type="hidden" name="_csrf_token" value="{$session.csrf_token}">
 	<fieldset>
 		<legend>Facebook Auth</legend>
 		<input type="submit" class="submit" value="Sign in with Facebook">
@@ -39,6 +41,7 @@
 	<input type="hidden" name="a" value="handleSectionAction">
 	<input type="hidden" name="section" value="facebook">
 	<input type="hidden" name="action" value="removeUser">
+	<input type="hidden" name="_csrf_token" value="{$session.csrf_token}">
 	<fieldset>
 		<legend>Authorized Users</legend>
 		<ul>
