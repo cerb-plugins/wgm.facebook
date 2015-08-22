@@ -15,7 +15,7 @@ class WgmFacebook_Controller extends DevblocksControllerExtension {
 	
 		@$code = DevblocksPlatform::importGPC($_REQUEST['code'], 'string', '');
 		$url = DevblocksPlatform::getUrlService();
-		$redirect_url = $url->write('ajax.php?c=config&a=handleSectionAction&section=facebook&action=auth&_callback=true&code=' . $code, true);
+		$redirect_url = $url->write('ajax.php?c=config&a=handleSectionAction&section=facebook&action=auth&_callback=true&code=' . $code . '&_csrf_token=' . $_SESSION['csrf_token'], true);
 		
 		header('Location: ' . $redirect_url);
 	}
@@ -90,8 +90,8 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 		$facebook = WgmFacebook_API::getInstance();
 		
 		$url = DevblocksPlatform::getUrlService();
-		$oauth_callback_url = $url->write('ajax.php?c=facebookauth', true);
-				
+		$oauth_callback_url = $url->write('ajax.php?c=facebookauth&_csrf_token=' . $_SESSION['csrf_token'], true);
+		
 		if($callback) {
 			if($code) {
 				$token = $facebook->getAccessToken($oauth_callback_url, $code);
@@ -176,13 +176,13 @@ class WgmFacebook_API {
 		return $this->_oauth->getAccessToken(self::FACEBOOK_ACCESS_TOKEN_URL .
 			"?client_id=" . $this->_client_id .
 			"&client_secret=" . $this->_client_secret .
-			"&redirect_uri=" . $callback_url .
+			"&redirect_uri=" . urlencode($callback_url) .
 			"&code=" . $code
 		);
 	}
 	
 	public function getAuthorizationUrl($callback_url) {
-		return self::FACEBOOK_AUTHENTICATE_URL . "?client_id=" . $this->_client_id . "&scope=public_profile,read_page_mailboxes,manage_pages,publish_pages&redirect_uri=" . $callback_url;
+		return self::FACEBOOK_AUTHENTICATE_URL . "?client_id=" . $this->_client_id . "&scope=public_profile,read_page_mailboxes,manage_pages,publish_pages&redirect_uri=" . urlencode($callback_url);
 	}
 	
 	public function getUser() {
