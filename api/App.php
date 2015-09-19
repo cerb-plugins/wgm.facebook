@@ -111,7 +111,7 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 				header('Location: ' . $auth_url);
 //				var_dump($oauth_callback_url);
 			} catch(OAuthException $e) {
-				echo "Exception: " . $e->getMessage();
+				echo "Exception: " . DevblocksPlatform::strEscapeHtml($e->getMessage());
 			}
 		}
 	}
@@ -216,7 +216,7 @@ class WgmFacebook_API {
 			$this->_oauth->fetch($url, $params, $method);
 			return json_decode($this->_oauth->getLastResponse(), true);
 		} catch(OAuthException $e) {
-			echo 'Exception: ' . $e->getMessage();
+			echo 'Exception: ' . DevblocksPlatform::strEscapeHtml($e->getMessage());
 		}
 		
 	}
