@@ -155,7 +155,9 @@ class WgmFacebook_API {
 		$this->_client_id = DevblocksPlatform::getPluginSetting('wgm.facebook','client_id','');
 		$this->_client_secret = DevblocksPlatform::getPluginSetting('wgm.facebook','client_secret','');
 		$this->_oauth = new OAuth($this->_client_id, $this->_client_secret);
-		$this->_oauth->setRequestEngine(OAUTH_REQENGINE_CURL);
+		
+		if(defined('OAUTH_REQENGINE_CURL'))
+			$this->_oauth->setRequestEngine(OAUTH_REQENGINE_CURL);
 	}
 	
 	/**
