@@ -1,30 +1,4 @@
 <?php
-class WgmFacebook_Controller extends DevblocksControllerExtension {
-	
-	function isVisible() {
-		// The current session must be a logged-in worker to use this page.
-		if(null == ($worker = CerberusApplication::getActiveWorker()))
-			return false;
-		return true;
-	}
-
-	/*
-	 * Request Overload
-	 */
-	function handleRequest(DevblocksHttpRequest $request) {
-	
-		@$code = DevblocksPlatform::importGPC($_REQUEST['code'], 'string', '');
-		$url = DevblocksPlatform::getUrlService();
-		$redirect_url = $url->write('ajax.php?c=config&a=handleSectionAction&section=facebook&action=auth&_callback=true&code=' . $code . '&_csrf_token=' . $_SESSION['csrf_token'], true);
-		
-		header('Location: ' . $redirect_url);
-	}
-
-	function writeResponse(DevblocksHttpResponse $response) {
-		return;
-	}
-};
-
 if(class_exists('Extension_PageMenuItem')):
 class WgmFacebook_SetupPluginsMenuItem extends Extension_PageMenuItem {
 	const POINT = 'wgmfacebook.setup.menu.plugins.facebook';
@@ -42,10 +16,6 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 	const ID = 'wgmfacebook.setup.facebook';
 	
 	function render() {
-		// check whether extensions are loaded or not
-		$extensions = array(
-			'oauth' => extension_loaded('oauth')
-		);
 		$tpl = DevblocksPlatform::getTemplateService();
 
 		$visit = CerberusApplication::getVisit();
@@ -57,7 +27,6 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 			'users' => json_decode(DevblocksPlatform::getPluginSetting('wgm.facebook', 'users', ''), TRUE),
 		);
 		$tpl->assign('params', $params);
-		$tpl->assign('extensions', $extensions);
 		
 		$tpl->display('devblocks:wgm.facebook::setup/index.tpl');
 	}
@@ -70,11 +39,11 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 			if(empty($client_id) || empty($client_secret))
 				throw new Exception("Both the API Auth Token and URL are required.");
 			
-			DevblocksPlatform::setPluginSetting('wgm.facebook','client_id',$client_id);
-			DevblocksPlatform::setPluginSetting('wgm.facebook','client_secret',$client_secret);
+			DevblocksPlatform::setPluginSetting('wgm.facebook','client_id', $client_id);
+			DevblocksPlatform::setPluginSetting('wgm.facebook','client_secret', $client_secret);
 			
-		    echo json_encode(array('status'=>true,'message'=>'Saved!'));
-		    return;
+			echo json_encode(array('status'=>true,'message'=>'Saved!'));
+			return;
 			
 		} catch (Exception $e) {
 			echo json_encode(array('status'=>false,'error'=>$e->getMessage()));
@@ -83,35 +52,46 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 	}
 	
 	function authAction() {
-		@$callback = DevblocksPlatform::importGPC($_REQUEST['_callback'], 'bool', 0);
-		@$post = DevblocksPlatform::importGPC($_REQUEST['_post'], 'bool', 0);
 		@$code = DevblocksPlatform::importGPC($_REQUEST['code'], 'string', '');
 		
+		$url = DevblocksPlatform::getUrlService();
 		$facebook = WgmFacebook_API::getInstance();
 		
-		$url = DevblocksPlatform::getUrlService();
-		$oauth_callback_url = $url->write('ajax.php?c=facebookauth&_csrf_token=' . $_SESSION['csrf_token'], true);
+		$oauth_callback_url = $url->write('ajax.php?c=config&a=handleSectionAction&section=facebook&action=auth&_csrf_token=' . $_SESSION['csrf_token'], true);
 		
-		if($callback) {
-			if($code) {
-				$token = $facebook->getAccessToken($oauth_callback_url, $code);
-				$facebook->setCredentials($token['access_token']);
-				$user = $facebook->getUser();
-				
-				$users = json_decode(DevblocksPlatform::getPluginSetting('wgm.facebook', 'users', ''), true);
-				$user = array('id' => $user['id'], 'name' => $user['name'], 'access_token' => $token['access_token']);
-				$users[$user['id']] = $user;
-				
-				DevblocksPlatform::setPluginSetting('wgm.facebook', 'users', json_encode($users));
-				DevblocksPlatform::redirect(new DevblocksHttpResponse(array('config/facebook/')));
+		if($code) {
+			$facebook->setCredentials($code);
+
+			$token = $facebook->getAccessToken($oauth_callback_url, $code);
+			
+			if(!is_array($token) || !isset($token['access_token'])) {
+				DevblocksPlatform::dieWithHttpError('Failed to retrieve OAuth token.');
 			}
+			
+			$facebook->setCredentials($token['access_token']);
+			
+			if(false == ($user = $facebook->getUser()))
+				DevblocksPlatform::dieWithHttpError('Failed to load Facebook user profile.');
+			
+			// [TODO] Validate this
+			// [TODO] Convert to storing pages
+			
+			$users = json_decode(DevblocksPlatform::getPluginSetting('wgm.facebook', 'users', ''), true);
+			$user = array('id' => $user['id'], 'name' => $user['name'], 'access_token' => $token['access_token']);
+			$users[$user['id']] = $user;
+			
+			DevblocksPlatform::setPluginSetting('wgm.facebook', 'users', json_encode($users));
+			
+			DevblocksPlatform::redirect(new DevblocksHttpResponse(array('config/facebook/')));
+			
 		} else {
 			try {
 				$auth_url = $facebook->getAuthorizationUrl($oauth_callback_url);
 				header('Location: ' . $auth_url);
-//				var_dump($oauth_callback_url);
+				return;
+				
 			} catch(OAuthException $e) {
-				echo "Exception: " . DevblocksPlatform::strEscapeHtml($e->getMessage());
+				error_log("Facebook OAuth Exception: " . $e->getMessage());
 			}
 		}
 	}
@@ -141,23 +121,21 @@ endif;
 class WgmFacebook_API {
 	const FACEBOOK_OAUTH_HOST = "https://graph.facebook.com";
 	const FACEBOOK_AUTHORIZE_URL = "https://graph.facebook.com/oauth/authorize";
-	const FACEBOOK_AUTHENTICATE_URL = "https://www.facebook.com/dialog/oauth";
 	const FACEBOOK_ACCESS_TOKEN_URL = "https://graph.facebook.com/oauth/access_token";
+	
 	const FACEBOOK_USER_URL = "https://graph.facebook.com/me";
 	
 	static $_instance = null;
+	
 	private $_oauth = null;
 	private $_client_id = null;
 	private $_client_secret = null;
-	private $_access_token = null;
 	
 	private function __construct() {
 		$this->_client_id = DevblocksPlatform::getPluginSetting('wgm.facebook','client_id','');
 		$this->_client_secret = DevblocksPlatform::getPluginSetting('wgm.facebook','client_secret','');
-		$this->_oauth = new OAuth($this->_client_id, $this->_client_secret);
 		
-		if(defined('OAUTH_REQENGINE_CURL'))
-			$this->_oauth->setRequestEngine(OAUTH_REQENGINE_CURL);
+		$this->_oauth = DevblocksPlatform::getOAuthService($this->_client_id, $this->_client_secret);
 	}
 	
 	/**
@@ -172,24 +150,28 @@ class WgmFacebook_API {
 	}
 	
 	public function setCredentials($token) {
-		$this->_access_token = $token;
+		$this->_oauth->setTokens($token);
 	}
 	
 	public function getAccessToken($callback_url, $code) {
-		return $this->_oauth->getAccessToken(self::FACEBOOK_ACCESS_TOKEN_URL .
+		$url = self::FACEBOOK_ACCESS_TOKEN_URL .
 			"?client_id=" . $this->_client_id .
 			"&client_secret=" . $this->_client_secret .
 			"&redirect_uri=" . urlencode($callback_url) .
-			"&code=" . $code
-		);
+			"&code=" . $code;
+		return $this->_oauth->getAccessToken($url);
 	}
 	
 	public function getAuthorizationUrl($callback_url) {
-		return self::FACEBOOK_AUTHENTICATE_URL . "?client_id=" . $this->_client_id . "&scope=public_profile,read_page_mailboxes,manage_pages,publish_pages&redirect_uri=" . urlencode($callback_url);
+		return self::FACEBOOK_AUTHORIZE_URL . "?client_id=" . $this->_client_id . "&scope=public_profile,read_page_mailboxes,manage_pages,publish_pages&redirect_uri=" . urlencode($callback_url);
 	}
 	
 	public function getUser() {
 		return $this->get(self::FACEBOOK_OAUTH_HOST . '/me');
+	}
+	
+	public function getUserAccounts() {
+		return $this->get(self::FACEBOOK_OAUTH_HOST . '/me/accounts');
 	}
 	
 	public function postStatusMessage($user, $content) {
@@ -200,26 +182,22 @@ class WgmFacebook_API {
 	}
 	
 	public function post($url, $params) {
-		$this->_fetch($url . '?access_token=' . $this->_access_token, 'POST', $params);
+		return $this->_fetch($url, 'POST', $params);
 	}
 	
 	public function get($url) {
-		return $this->_fetch($url . '?access_token=' . $this->_access_token, 'GET');
+		return $this->_fetch($url, 'GET');
 	}
 	
 	private function _fetch($url, $method = 'GET', $params = array()) {
-		switch($method) {
-			case 'POST':
-				$method = OAUTH_HTTP_METHOD_POST;
-				break;
-			default:
-				$method = OAUTH_HTTP_METHOD_GET;
-		}
 		try {
-			$this->_oauth->fetch($url, $params, $method);
-			return json_decode($this->_oauth->getLastResponse(), true);
+			if(false == ($response = $this->_oauth->executeRequestWithToken($method, $url, $params)))
+				return false;
+			
+			return json_decode($response, true);
+			
 		} catch(OAuthException $e) {
-			echo 'Exception: ' . DevblocksPlatform::strEscapeHtml($e->getMessage());
+			error_log('Facebook OAuth Error: ' . $e->getMessage());
 		}
 		
 	}

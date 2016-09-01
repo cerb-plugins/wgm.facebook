@@ -1,7 +1,4 @@
 <h2>{'wgm.facebook.common'|devblocks_translate}</h2>
-{if !$extensions.oauth}
-<b>The oauth extension is not installed.</b>
-{else}
 <form action="javascript:;" method="post" id="frmSetupFacebook" onsubmit="return false;">
 	<input type="hidden" name="c" value="config">
 	<input type="hidden" name="a" value="handleSectionAction">
@@ -54,39 +51,39 @@
 </form>
 {/if}
 <script type="text/javascript">
-$('#frmSetupFacebook BUTTON.submit')
-	.click(function(e) {
-		genericAjaxPost('frmSetupFacebook','',null,function(json) {
-			$o = $.parseJSON(json);
-			if(false == $o || false == $o.status) {
-				Devblocks.showError('#frmSetupFacebook div.status',$o.error);
-				$('#frmAuthFacebook').fadeOut();
-			} else {
-				Devblocks.showSuccess('#frmSetupFacebook div.status',$o.message);
-				$('#frmAuthFacebook').fadeIn();
-			}
-		});
-	})
-;
-$('#frmDeleteFacebook BUTTON.submit')
-	.click(function(e) {
-		var user_id = $(this).attr('id');
-		
-		genericAjaxPost('frmDeleteFacebook', '', 'user_id=' + user_id, function(json) {
-			$o = $.parseJSON(json);
-			if(false == $o || false == $o.status) {
-				Devblocks.showError('#frmDeleteFacebook div.status',$o.error);
-			} else {
-				if($o.count == 0) {
-					$('#frmDeleteFacebook').fadeOut();
+$(function() {
+	$('#frmSetupFacebook BUTTON.submit')
+		.click(function(e) {
+			genericAjaxPost('frmSetupFacebook','',null,function(json) {
+				$o = $.parseJSON(json);
+				if(false == $o || false == $o.status) {
+					Devblocks.showError('#frmSetupFacebook div.status',$o.error);
+					$('#frmAuthFacebook').fadeOut();
 				} else {
-					$('#'+user_id).parent().fadeOut();
-					$('#'+user_id).parent().remove();
+					Devblocks.showSuccess('#frmSetupFacebook div.status',$o.message);
+					$('#frmAuthFacebook').fadeIn();
 				}
-			}
-		});
-	})
-;
-
+			});
+		})
+	;
+	$('#frmDeleteFacebook BUTTON.submit')
+		.click(function(e) {
+			var user_id = $(this).attr('id');
+			
+			genericAjaxPost('frmDeleteFacebook', '', 'user_id=' + user_id, function(json) {
+				$o = $.parseJSON(json);
+				if(false == $o || false == $o.status) {
+					Devblocks.showError('#frmDeleteFacebook div.status',$o.error);
+				} else {
+					if($o.count == 0) {
+						$('#frmDeleteFacebook').fadeOut();
+					} else {
+						$('#'+user_id).parent().fadeOut();
+						$('#'+user_id).parent().remove();
+					}
+				}
+			});
+		})
+	;
+});
 </script>
-{/if}
