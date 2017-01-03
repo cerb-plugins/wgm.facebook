@@ -1,24 +1,22 @@
 Cerb Plugins - wgm.facebook
 ===========================================
-Copyright (C) 2012 Webgroup Media, LLC.  
-[http://www.cerberusweb.com/](http://www.cerberusweb.com/)  
+Copyright (C) 2017 Webgroup Media, LLC.  
+[http://cerb.io/](http://cerb.io/)  
 
 What's this?
 ------------
-This plugin provides integration with [Facebook](http://www.facebook.com/) via their REST API. This plugin is intended to be a bridge used by other plugins to communicate with the Facebook Graph API. In addition, it adds a new Virtual Attendant action with the ability to post status updates to Facebook.
+This plugin provides integration with [Facebook](http://www.facebook.com/) via their REST API. This plugin is intended to be a bridge used by other plugins to communicate with the Facebook Graph API. In addition, it adds a new bot action with the ability to post status updates to Facebook.
 
 Installation
 ------------
 * Make a new [Facebook Application](https://developers.facebook.com/apps)
-* Change directory to **/cerb6/storage/plugins/**
-* `git clone git://github.com/cerb-plugins/wgm.facebook.git`
-* In your helpdesk, enable the plugin from **Setup->Plugins**.
-* Click **Setup->Plugins->Facebook** and configure your Facebook app credentials.
+* Install the plugin from **Setup->Plugins->Library**.
+* Click **Setup->Services->Facebook** and configure your Facebook app credentials.
 * Authorize the app for the users you wish to be available to the plugin
 
 Credits
 -------
-This plugin was developed by [WebGroup Media, LLC](http://www.cerberusweb.com/).
+This plugin was developed by [Webgroup Media, LLC](http://www.cerberusweb.com/).
 
 License
 -------
