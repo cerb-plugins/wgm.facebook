@@ -79,7 +79,7 @@
 
 		<extension point="cerberusweb.ui.page.menu.item">
 			<id>wgmfacebook.setup.menu.plugins.facebook</id>
-			<name>Facebook Plugins Menu Item</name>
+			<name>Facebook</name>
 			<class>
 				<file>api/App.php</file>
 				<name>WgmFacebook_SetupPluginsMenuItem</name>
