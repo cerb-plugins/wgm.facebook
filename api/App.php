@@ -205,6 +205,40 @@ endif;
 class ServiceProvider_Facebook extends Extension_ServiceProvider implements IServiceProvider_OAuth, IServiceProvider_HttpRequestSigner {
 	const ID = 'wgm.facebook.service.provider';
 	
+	function renderConfigForm(Model_ConnectedAccount $account) {
+		$tpl = DevblocksPlatform::getTemplateService();
+		$active_worker = CerberusApplication::getActiveWorker();
+		
+		$tpl->assign('account', $account);
+		
+		$params = $account->decryptParams($active_worker);
+		$tpl->assign('params', $params);
+		
+		$tpl->display('devblocks:wgm.facebook::providers/facebook.tpl');
+	}
+	
+	function saveConfigForm(Model_ConnectedAccount $account, array &$params) {
+		@$edit_params = DevblocksPlatform::importGPC($_POST['params'], 'array', array());
+		
+		$active_worker = CerberusApplication::getActiveWorker();
+		$encrypt = DevblocksPlatform::getEncryptionService();
+		
+		// Decrypt OAuth params
+		if(isset($edit_params['params_json'])) {
+			if(false == ($outh_params_json = $encrypt->decrypt($edit_params['params_json'])))
+				return "The connected account authentication is invalid.";
+				
+			if(false == ($oauth_params = json_decode($outh_params_json, true)))
+				return "The connected account authentication is malformed.";
+			
+			if(is_array($oauth_params))
+			foreach($oauth_params as $k => $v)
+				$params[$k] = $v;
+		}
+		
+		return true;
+	}
+	
 	private function _getAppKeys() {
 		$credentials = DevblocksPlatform::getPluginSetting('wgm.facebook','credentials',[],true,true);
 		
@@ -217,8 +251,11 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 		);
 	}
 	
-	function renderPopup() {
-		@$view_id = DevblocksPlatform::importGPC($_REQUEST['view_id'], 'string', '');
+	function oauthRender() {
+		@$form_id = DevblocksPlatform::importGPC($_REQUEST['form_id'], 'string', '');
+		
+		// Store the $form_id in the session
+		$_SESSION['oauth_form_id'] = $form_id;
 		
 		// [TODO] Report about missing app keys
 		if(false == ($app_keys = $this->_getAppKeys()))
@@ -228,7 +265,7 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret']);
 		
 		// OAuth callback
-		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Facebook::ID), true) . '?view_id=' . rawurlencode($view_id);
+		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Facebook::ID), true);
 		
 		// [TODO] The scope should come from the app config
 		$url = sprintf("%s?client_id=%s&scope=%s&redirect_uri=%s",
@@ -244,16 +281,19 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 	// [TODO] Verify the caller?
 	function oauthCallback() {
 		@$code = $_REQUEST['code'];
-		@$view_id = DevblocksPlatform::importGPC($_REQUEST['view_id'], 'string', '');
+		
+		$form_id = $_SESSION['oauth_form_id'];
+		unset($_SESSION['oauth_form_id']);
 		
 		$url_writer = DevblocksPlatform::getUrlService();
+		$encrypt = DevblocksPlatform::getEncryptionService();
 		$active_worker = CerberusApplication::getActiveWorker();
 		
 		if(false == ($app_keys = $this->_getAppKeys()))
 			return false;
-
+		
 		// OAuth callback
-		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Facebook::ID), true) . '?view_id=' . rawurlencode($view_id);
+		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Facebook::ID), true);
 		
 		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret']);
 		$oauth->setTokens($code);
@@ -264,7 +304,7 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 			"&redirect_uri=" . urlencode($redirect_url) .
 			"&code=" . $code
 			;
-			
+		
 		$params = $oauth->getAccessToken($url);
 		
 		$fb = WgmFacebook_API::getInstance();
@@ -273,41 +313,17 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 		if(false == ($profile_data = $fb->getUser()))
 			return;
 		
-		if(false == ($pages = $fb->getUserAccounts()))
-			return;
+		$params['profile'] = [
+			'id' => $profile_data['id'],
+			'name' => $profile_data['name'],
+		];
 		
-		$params['pages'] = array();
-		
-		if(isset($pages['data']))
-		foreach($pages['data'] as $page) {
-			$params['pages'][$page['id']] = array(
-				'access_token' => $page['access_token'],
-				'name' => $page['name'],
-				//'perms' => $page['perms'],
-			);
-		}
-		
-		// [TODO] cache timestamp since tokens can expire
-		
-		$id = DAO_ConnectedAccount::create(array(
-			DAO_ConnectedAccount::NAME => 'Facebook @' . $profile_data['name'],
-			DAO_ConnectedAccount::EXTENSION_ID => ServiceProvider_Facebook::ID,
-			DAO_ConnectedAccount::OWNER_CONTEXT => CerberusContexts::CONTEXT_WORKER,
-			DAO_ConnectedAccount::OWNER_CONTEXT_ID => $active_worker->id,
-		));
-		
-		DAO_ConnectedAccount::setAndEncryptParams($id, $params);
-		
-		if($view_id) {
-			echo sprintf("<script>window.opener.genericAjaxGet('view%s', 'c=internal&a=viewRefresh&id=%s');</script>",
-				rawurlencode($view_id),
-				rawurlencode($view_id)
-			);
-			
-			C4_AbstractView::setMarqueeContextCreated($view_id, CerberusContexts::CONTEXT_CONNECTED_ACCOUNT, $id);
-		}
-		
-		echo "<script>window.close();</script>";
+		// Output
+		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl->assign('form_id', $form_id);
+		$tpl->assign('label', $profile_data['name']);
+		$tpl->assign('params_json', $encrypt->encrypt(json_encode($params)));
+		$tpl->display('devblocks:cerberusweb.core::internal/connected_account/oauth_callback.tpl');
 	}
 	
 	function authenticateHttpRequest(Model_ConnectedAccount $account, &$ch, &$verb, &$url, &$body, &$headers) {
@@ -323,11 +339,44 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 		
 		return true;
 	}
-	
 }
 
 class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements IServiceProvider_OAuth, IServiceProvider_HttpRequestSigner {
 	const ID = 'wgm.facebook.pages.service.provider';
+	
+	function renderConfigForm(Model_ConnectedAccount $account) {
+		$tpl = DevblocksPlatform::getTemplateService();
+		$active_worker = CerberusApplication::getActiveWorker();
+		
+		$tpl->assign('account', $account);
+		
+		$params = $account->decryptParams($active_worker);
+		$tpl->assign('params', $params);
+		
+		$tpl->display('devblocks:wgm.facebook::providers/facebook_pages.tpl');
+	}
+	
+	function saveConfigForm(Model_ConnectedAccount $account, array &$params) {
+		@$edit_params = DevblocksPlatform::importGPC($_POST['params'], 'array', array());
+		
+		$active_worker = CerberusApplication::getActiveWorker();
+		$encrypt = DevblocksPlatform::getEncryptionService();
+		
+		// Decrypt OAuth params
+		if(isset($edit_params['params_json'])) {
+			if(false == ($outh_params_json = $encrypt->decrypt($edit_params['params_json'])))
+				return "The connected account authentication is invalid.";
+				
+			if(false == ($oauth_params = json_decode($outh_params_json, true)))
+				return "The connected account authentication is malformed.";
+			
+			if(is_array($oauth_params))
+			foreach($oauth_params as $k => $v)
+				$params[$k] = $v;
+		}
+		
+		return true;
+	}
 	
 	private function _getAppKeys() {
 		$credentials = DevblocksPlatform::getPluginSetting('wgm.facebook','credentials',[],true,true);
@@ -341,8 +390,11 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		);
 	}
 	
-	function renderPopup() {
-		@$view_id = DevblocksPlatform::importGPC($_REQUEST['view_id'], 'string', '');
+	function oauthRender() {
+		@$form_id = DevblocksPlatform::importGPC($_REQUEST['form_id'], 'string', '');
+		
+		// Store the $form_id in the session
+		$_SESSION['oauth_form_id'] = $form_id;
 		
 		// [TODO] Report about missing app keys
 		if(false == ($app_keys = $this->_getAppKeys()))
@@ -352,7 +404,7 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret']);
 		
 		// OAuth callback
-		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_FacebookPages::ID), true) . '?view_id=' . rawurlencode($view_id);
+		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_FacebookPages::ID), true);
 		
 		// [TODO] The scope should come from the app config
 		$url = sprintf("%s?client_id=%s&scope=%s&redirect_uri=%s",
@@ -369,13 +421,14 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 	function oauthCallback() {
 		@$mode = $_REQUEST['mode'];
 		
-		if($mode == 'choosePages') {
-			$this->choosePagesAction();
+		if($mode == 'choosePage') {
+			$this->choosePageAction();
 			return;
 		}
 		
 		@$code = $_REQUEST['code'];
-		@$view_id = DevblocksPlatform::importGPC($_REQUEST['view_id'], 'string', '');
+		
+		unset($_SESSION['facebook_pages_data']);
 		
 		$tpl = DevblocksPlatform::getTemplateService();
 		$encrypt = DevblocksPlatform::getEncryptionService();
@@ -386,7 +439,7 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 			return false;
 
 		// OAuth callback
-		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_FacebookPages::ID), true) . '?view_id=' . rawurlencode($view_id);
+		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_FacebookPages::ID), true);
 		
 		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret']);
 		$oauth->setTokens($code);
@@ -417,14 +470,17 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		$pages = array_column($pages_data['data'], 'name', 'id');
 		$tpl->assign('pages', $pages);
 		
-		$tpl->display('devblocks:wgm.facebook::setup/pick_pages.tpl');
+		$tpl->display('devblocks:wgm.facebook::setup/pick_page.tpl');
 	}
 	
-	function choosePagesAction() {
-		@$page_ids = DevblocksPlatform::importGPC($_POST['page_ids'],'array',[]);
+	function choosePageAction() {
+		@$page_id = DevblocksPlatform::importGPC($_POST['page_id'],'string','');
 		@$view_id = DevblocksPlatform::importGPC($_POST['view_id'],'string','');
 		
 		$encrypt = DevblocksPlatform::getEncryptionService();
+		
+		$form_id = $_SESSION['oauth_form_id'];
+		unset($_SESSION['oauth_form_id']);
 		
 		if(false == ($active_worker = CerberusApplication::getActiveWorker()))
 			DevblocksPlatform::dieWithHttpError('Invalid session data.', 403);
@@ -432,43 +488,22 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		@$pages_data = json_decode($encrypt->decrypt($_SESSION['facebook_pages_data']), true);
 		unset($_SESSION['facebook_pages_data']);
 		
-		if(empty($pages_data)) {
-			unset($_SESSION['facebook_pages_data']);
+		if(empty($pages_data) || !is_array($pages_data)) {
 			DevblocksPlatform::dieWithHttpError('Invalid session data.', 403);
 			return;
 		}
 		
-		$ids = [];
-		
 		foreach($pages_data as $page_data) {
-			if(!in_array($page_data['id'], $page_ids))
-				continue;
-			
-			$id = DAO_ConnectedAccount::create(array(
-				DAO_ConnectedAccount::NAME => 'Facebook Pages: ' . $page_data['name'],
-				DAO_ConnectedAccount::EXTENSION_ID => ServiceProvider_FacebookPages::ID,
-				DAO_ConnectedAccount::OWNER_CONTEXT => CerberusContexts::CONTEXT_WORKER,
-				DAO_ConnectedAccount::OWNER_CONTEXT_ID => $active_worker->id,
-			));
-			
-			$ids[] = $id;
-			
-			// [TODO] cache timestamp since tokens can expire
-			
-			DAO_ConnectedAccount::setAndEncryptParams($id, $page_data);
+			if($page_data['id'] == $page_id) {
+				// Output
+				$tpl = DevblocksPlatform::getTemplateService();
+				$tpl->assign('form_id', $form_id);
+				$tpl->assign('label', $page_data['name']);
+				$tpl->assign('params_json', $encrypt->encrypt(json_encode($page_data)));
+				$tpl->display('devblocks:cerberusweb.core::internal/connected_account/oauth_callback.tpl');
+				break;
+			}
 		}
-		
-		if($view_id) {
-			echo sprintf("<script>window.opener.genericAjaxGet('view%s', 'c=internal&a=viewRefresh&id=%s');</script>",
-				rawurlencode($view_id),
-				rawurlencode($view_id)
-			);
-			
-			if(!empty($ids))
-				C4_AbstractView::setMarqueeContextCreated($view_id, CerberusContexts::CONTEXT_CONNECTED_ACCOUNT, reset($ids));
-		}
-		
-		echo "<script>window.close();</script>";
 	}
 	
 	function authenticateHttpRequest(Model_ConnectedAccount $account, &$ch, &$verb, &$url, &$body, &$headers) {
