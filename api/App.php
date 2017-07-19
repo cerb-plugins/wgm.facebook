@@ -21,7 +21,7 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 		$visit = CerberusApplication::getVisit();
 		$visit->set(ChConfigurationPage::ID, 'facebook');
 		
-		$credentials = DevblocksPlatform::getPluginSetting('wgm.facebook', 'credentials', '', true, true);
+		$credentials = DevblocksPlatform::getPluginSetting('wgm.facebook', 'credentials', [], true, true);
 		$tpl->assign('credentials', $credentials);
 		
 		$tpl->display('devblocks:wgm.facebook::setup/index.tpl');
@@ -67,7 +67,7 @@ class WgmFacebook_API {
 	private $_client_secret = null;
 	
 	private function __construct() {
-		$credentials = DevblocksPlatform::getPluginSetting('wgm.facebook', 'credentials', '', true, true);
+		$credentials = DevblocksPlatform::getPluginSetting('wgm.facebook', 'credentials', [], true, true);
 		
 		$this->_client_id = @$credentials['client_id'];
 		$this->_client_secret = @$credentials['client_secret'];
@@ -465,7 +465,8 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		
 		$_SESSION['facebook_pages_data'] = $encrypt->encrypt(json_encode($pages_data['data']));
 		
-		$tpl->assign('view_id', $view_id);
+		if($view_id)
+			$tpl->assign('view_id', $view_id);
 		
 		$pages = array_column($pages_data['data'], 'name', 'id');
 		$tpl->assign('pages', $pages);
