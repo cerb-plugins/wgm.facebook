@@ -4,7 +4,7 @@ class WgmFacebook_SetupPluginsMenuItem extends Extension_PageMenuItem {
 	const POINT = 'wgmfacebook.setup.menu.plugins.facebook';
 	
 	function render() {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->assign('extension', $this);
 		$tpl->display('devblocks:wgm.facebook::setup/menu_item.tpl');
 	}
@@ -16,7 +16,7 @@ class WgmFacebook_SetupSection extends Extension_PageSection {
 	const ID = 'wgmfacebook.setup.facebook';
 	
 	function render() {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 
 		$visit = CerberusApplication::getVisit();
 		$visit->set(ChConfigurationPage::ID, 'facebook');
@@ -72,7 +72,7 @@ class WgmFacebook_API {
 		$this->_client_id = @$credentials['client_id'];
 		$this->_client_secret = @$credentials['client_secret'];
 		
-		$this->_oauth = DevblocksPlatform::getOAuthService($this->_client_id, $this->_client_secret);
+		$this->_oauth = DevblocksPlatform::services()->oauth($this->_client_id, $this->_client_secret);
 	}
 	
 	/**
@@ -137,7 +137,7 @@ class WgmFacebook_API {
 if(class_exists('Extension_DevblocksEventAction')):
 class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 	function render(Extension_DevblocksEvent $event, Model_TriggerEvent $trigger, $params=array(), $seq=null) {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->assign('params', $params);
 		
 		if(!is_null($seq))
@@ -165,7 +165,7 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 		if(!isset($credentials['access_token']) || !isset($credentials['id']))
 			return "[ERROR] The stored credentials lack an ID or access_token.";
 		
-		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
+		$tpl_builder = DevblocksPlatform::services()->templateBuilder();
 		if(false !== ($content = $tpl_builder->build($content, $dict))) {
 			$out .= sprintf(">>> Posting message to %s\n\n%s\n",
 				$account->name,
@@ -193,7 +193,7 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 			return false;
 		
 		// Translate message tokens
-		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
+		$tpl_builder = DevblocksPlatform::services()->templateBuilder();
 		if(false !== ($content = $tpl_builder->build($content, $dict))) {
 			$facebook->setCredentials($credentials['access_token']);
 			$facebook->postStatusMessage($credentials['id'], $content);
@@ -206,7 +206,7 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 	const ID = 'wgm.facebook.service.provider';
 	
 	function renderConfigForm(Model_ConnectedAccount $account) {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$active_worker = CerberusApplication::getActiveWorker();
 		
 		$tpl->assign('account', $account);
@@ -221,7 +221,7 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 		@$edit_params = DevblocksPlatform::importGPC($_POST['params'], 'array', array());
 		
 		$active_worker = CerberusApplication::getActiveWorker();
-		$encrypt = DevblocksPlatform::getEncryptionService();
+		$encrypt = DevblocksPlatform::services()->encryption();
 		
 		// Decrypt OAuth params
 		if(isset($edit_params['params_json'])) {
@@ -261,8 +261,8 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 		if(false == ($app_keys = $this->_getAppKeys()))
 			return false;
 		
-		$url_writer = DevblocksPlatform::getUrlService();
-		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret']);
+		$url_writer = DevblocksPlatform::services()->url();
+		$oauth = DevblocksPlatform::services()->oauth($app_keys['key'], $app_keys['secret']);
 		
 		// OAuth callback
 		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Facebook::ID), true);
@@ -285,8 +285,8 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 		$form_id = $_SESSION['oauth_form_id'];
 		unset($_SESSION['oauth_form_id']);
 		
-		$url_writer = DevblocksPlatform::getUrlService();
-		$encrypt = DevblocksPlatform::getEncryptionService();
+		$url_writer = DevblocksPlatform::services()->url();
+		$encrypt = DevblocksPlatform::services()->encryption();
 		$active_worker = CerberusApplication::getActiveWorker();
 		
 		if(false == ($app_keys = $this->_getAppKeys()))
@@ -295,7 +295,7 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 		// OAuth callback
 		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Facebook::ID), true);
 		
-		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret']);
+		$oauth = DevblocksPlatform::services()->oauth($app_keys['key'], $app_keys['secret']);
 		$oauth->setTokens($code);
 		
 		$url = WgmFacebook_API::FACEBOOK_ACCESS_TOKEN_URL .
@@ -319,7 +319,7 @@ class ServiceProvider_Facebook extends Extension_ServiceProvider implements ISer
 		];
 		
 		// Output
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->assign('form_id', $form_id);
 		$tpl->assign('label', $profile_data['name']);
 		$tpl->assign('params_json', $encrypt->encrypt(json_encode($params)));
@@ -345,7 +345,7 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 	const ID = 'wgm.facebook.pages.service.provider';
 	
 	function renderConfigForm(Model_ConnectedAccount $account) {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$active_worker = CerberusApplication::getActiveWorker();
 		
 		$tpl->assign('account', $account);
@@ -360,7 +360,7 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		@$edit_params = DevblocksPlatform::importGPC($_POST['params'], 'array', array());
 		
 		$active_worker = CerberusApplication::getActiveWorker();
-		$encrypt = DevblocksPlatform::getEncryptionService();
+		$encrypt = DevblocksPlatform::services()->encryption();
 		
 		// Decrypt OAuth params
 		if(isset($edit_params['params_json'])) {
@@ -400,8 +400,8 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		if(false == ($app_keys = $this->_getAppKeys()))
 			return false;
 		
-		$url_writer = DevblocksPlatform::getUrlService();
-		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret']);
+		$url_writer = DevblocksPlatform::services()->url();
+		$oauth = DevblocksPlatform::services()->oauth($app_keys['key'], $app_keys['secret']);
 		
 		// OAuth callback
 		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_FacebookPages::ID), true);
@@ -430,9 +430,9 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		
 		unset($_SESSION['facebook_pages_data']);
 		
-		$tpl = DevblocksPlatform::getTemplateService();
-		$encrypt = DevblocksPlatform::getEncryptionService();
-		$url_writer = DevblocksPlatform::getUrlService();
+		$tpl = DevblocksPlatform::services()->template();
+		$encrypt = DevblocksPlatform::services()->encryption();
+		$url_writer = DevblocksPlatform::services()->url();
 		$active_worker = CerberusApplication::getActiveWorker();
 		
 		if(false == ($app_keys = $this->_getAppKeys()))
@@ -441,7 +441,7 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		// OAuth callback
 		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_FacebookPages::ID), true);
 		
-		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret']);
+		$oauth = DevblocksPlatform::services()->oauth($app_keys['key'], $app_keys['secret']);
 		$oauth->setTokens($code);
 		
 		$url = WgmFacebook_API::FACEBOOK_ACCESS_TOKEN_URL .
@@ -478,7 +478,7 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		@$page_id = DevblocksPlatform::importGPC($_POST['page_id'],'string','');
 		@$view_id = DevblocksPlatform::importGPC($_POST['view_id'],'string','');
 		
-		$encrypt = DevblocksPlatform::getEncryptionService();
+		$encrypt = DevblocksPlatform::services()->encryption();
 		
 		$form_id = $_SESSION['oauth_form_id'];
 		unset($_SESSION['oauth_form_id']);
@@ -497,7 +497,7 @@ class ServiceProvider_FacebookPages extends Extension_ServiceProvider implements
 		foreach($pages_data as $page_data) {
 			if($page_data['id'] == $page_id) {
 				// Output
-				$tpl = DevblocksPlatform::getTemplateService();
+				$tpl = DevblocksPlatform::services()->template();
 				$tpl->assign('form_id', $form_id);
 				$tpl->assign('label', $page_data['name']);
 				$tpl->assign('params_json', $encrypt->encrypt(json_encode($page_data)));
