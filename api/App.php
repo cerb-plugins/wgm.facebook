@@ -134,7 +134,6 @@ class WgmFacebook_API {
 	}
 }
 
-if(class_exists('Extension_DevblocksEventAction')):
 class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 	function render(Extension_DevblocksEvent $event, Model_TriggerEvent $trigger, $params=array(), $seq=null) {
 		$tpl = DevblocksPlatform::services()->template();
@@ -200,7 +199,6 @@ class WgmFacebook_EventActionPost extends Extension_DevblocksEventAction {
 		}
 	}
 };
-endif;
 
 class ServiceProvider_Facebook extends Extension_ServiceProvider implements IServiceProvider_OAuth, IServiceProvider_HttpRequestSigner {
 	const ID = 'wgm.facebook.service.provider';
